@@ -111,9 +111,9 @@ for (let z = -25; z < 650; z += 19) {
 
 // Route and stations: all distances are metres along the track.
 const stations = [
-  { name: 'Midori', position: 150 },
-  { name: 'Hikari Park', position: 320 },
-  { name: 'Sakura Terminal', position: 480 }
+  { name: 'Tokyo ', position: 150 },
+  { name: 'Kanda', position: 320 },
+  { name: 'Akihabara', position: 480 }
 ];
 
 const safetyTargets = [
@@ -124,19 +124,19 @@ const safetyTargets = [
     type: 'signal'
   },
   {
-    name: 'Midori marker',
+    name: 'Tokyo marker',
     call: 'Stop marker confirmed',
     position: 150,
     type: 'station'
   },
   {
-    name: 'Hikari Park marker',
+    name: 'Kanda marker',
     call: 'Stop marker confirmed',
     position: 320,
     type: 'station'
   },
   {
-    name: 'Sakura Terminal marker',
+    name: 'Akihabara marker',
     call: 'Stop marker confirmed',
     position: 480,
     type: 'station'
@@ -456,10 +456,15 @@ window.addEventListener('keydown', event => {
     case 'KeyW':
     case 'ArrowUp':
       if (state.brake === 0) setPower(state.power + 1);
+      if (state.power === 0) setBrake(state.brake - 1)
       break;
     case 'KeyS':
     case 'ArrowDown':
-      setPower(state.power - 1);
+        if (state.power > 0) {
+    setPower(state.power - 1);
+  } else {
+    setBrake(state.brake + 1);
+  }
       break;
     case 'KeyX':
       setPower(0);
