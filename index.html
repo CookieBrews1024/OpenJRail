@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101820" />
+    <title>OpenJRail — Railway Simulator</title>
+  </head>
+  <body>
+    <div id="simulator">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">OJ</span>
+          <div>
+            <strong>OpenJRail</strong>
+            <small>RAILWAY SIMULATOR · PROTOTYPE 0.1</small>
+          </div>
+        </div>
+        <div class="service-label">SAKURA LINE <span>● TRAIN ACTIVE</span></div>
+      </header>
+
+      <main id="game">
+        <div id="scene"></div>
+
+        <section class="hud">
+          <div class="speed-panel">
+            <span class="eyebrow">CURRENT SPEED</span>
+            <div class="speed-number"><span id="speed">0</span><small>km/h</small></div>
+            <div class="speed-track"><div id="speed-bar"></div></div>
+            <div class="speed-footer">
+              <span>0</span><span>40</span><span>80 km/h</span>
+            </div>
+          </div>
+
+          <div class="route-panel">
+            <span class="eyebrow">ROUTE INFORMATION</span>
+            <strong>Sakura Central → Midori</strong>
+            <div>Speed limit <b>80 km/h</b></div>
+            <div>Distance travelled <b id="distance">0 m</b></div>
+            <div>Power notch <b id="power-value">N</b></div>
+            <div>Brake notch <b id="brake-value">0</b></div>
+          </div>
+        </section>
+
+        <div class="message" id="message">READY · Increase power to depart</div>
+      </main>
+
+      <footer class="controls">
+        <div class="control-group">
+          <span class="eyebrow">POWER</span>
+          <button id="power-down" aria-label="Reduce power">−</button>
+          <div class="notch" id="power-notch">N</div>
+          <button id="power-up" aria-label="Increase power">+</button>
+        </div>
+
+        <div class="control-group">
+          <span class="eyebrow">BRAKE</span>
+          <button id="brake-down" aria-label="Release brake">−</button>
+          <div class="notch" id="brake-notch">0</div>
+          <button id="brake-up" aria-label="Increase brake">+</button>
+        </div>
+
+        <div class="keyboard-help">
+          <span><kbd>W</kbd> Power</span>
+          <span><kbd>S</kbd> Power down</span>
+          <span><kbd>X</kbd> Coast</span>
+          <span><kbd>Space</kbd> Brake</span>
+          <span><kbd>B</kbd> Emergency</span>
+        </div>
+
+        <button id="reset" class="reset-button">Reset run</button>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
