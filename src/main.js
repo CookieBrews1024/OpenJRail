@@ -230,7 +230,7 @@ scene.add(train);
 const loader = new GLTFLoader();
 
 loader.load(
-  '/public/models/yamanote-e235.glb',
+  '/models/yamanote-e235.glb',
   (gltf) => {
     const model = gltf.scene;
 
