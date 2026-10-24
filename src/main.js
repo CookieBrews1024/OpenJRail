@@ -309,12 +309,12 @@ const state = {
 
 function setPower(value) {
   if (state.awaitingDeparture) return;
-  state.power = THREE.MathUtils.clamp(value, 0, 4);
+  state.power = THREE.MathUtils.clamp(value, 0, 3);
   state.emergency = false;
 }
 
 function setBrake(value) {
-  state.brake = THREE.MathUtils.clamp(value, 0, 4);
+  state.brake = THREE.MathUtils.clamp(value, 0, 3);
   state.emergency = false;
   if (state.brake > 0) state.power = 0;
 }
@@ -351,12 +351,30 @@ function scoreStation(station, missed = false) {
 
 function updateHUD() {
   const kmh = state.speed * 3.6;
+
+const gaugeSpeed = Math.max(0, Math.min(120, kmh));
+const needleAngle = -135 + (gaugeSpeed / 120) * 270;
+
+$('speed-needle').setAttribute(
+  'transform',
+  `rotate(${needleAngle} 100 100)`
+);
+
+$('gauge-digital-speed').textContent = Math.round(kmh);
+
+const limitKmh = route.speedLimit * 3.6;
+$('speed-limit').textContent = Math.round(limitKmh);
+
+document.querySelector('.limit-display').classList.toggle(
+  'overspeed',
+  kmh > limitKmh + 0.5
+);
+
   const station = stations[state.stationIndex];
   const distance = station
     ? station.position - state.position
     : 0;
 
-  $('speed').textContent = Math.round(kmh);
   $('speed-bar').style.width =
     `${Math.min(100, kmh / 80 * 100)}%`;
 
@@ -369,11 +387,20 @@ function updateHUD() {
   $('brake-value').textContent =
     state.emergency ? 'EB' : state.brake;
 
-  $('power-notch').textContent =
-    state.power === 0 ? 'N' : `P${state.power}`;
+document.querySelectorAll('.notch-option').forEach(button => {
+  const mode = button.dataset.mode;
+  const notch = Number(button.dataset.notch);
 
-  $('brake-notch').textContent =
-    state.emergency ? 'EB' : state.brake;
+  const active =
+    (mode === 'power' && state.power === notch) ||
+    (mode === 'neutral' && state.power === 0 &&
+      state.brake === 0 && !state.emergency) ||
+    (mode === 'brake' && state.power === 0 &&
+      state.brake === notch) ||
+    (mode === 'brake' && notch === 4 && state.emergency);
+
+  button.classList.toggle('active', active);
+});
 
   const totalScore = state.scores.length
     ? Math.round(state.scores.reduce((a, b) => a + b, 0)
@@ -421,13 +448,24 @@ $('safety-feedback').textContent = safetyFeedback;
 $('safety-score').textContent = `Safety points: ${safetyScore}`;
 }
 
-// Controller buttons
-$('power-up').addEventListener('click', () => {
-  if (state.brake === 0) setPower(state.power + 1);
+// Vertical notched controller
+document.querySelectorAll('.notch-option').forEach(button => {
+  button.addEventListener('click', () => {
+    const mode = button.dataset.mode;
+    const notch = Number(button.dataset.notch);
+
+    if (mode === 'power') {
+      setBrake(0);
+      setPower(notch);
+    } else if (mode === 'neutral') {
+      setPower(0);
+      setBrake(0);
+    } else if (mode === 'brake' && notch >= 1 && notch <= 3) {
+    setPower(0);
+    setBrake(notch);
+    }
+  });
 });
-$('power-down').addEventListener('click', () => setPower(state.power - 1));
-$('brake-up').addEventListener('click', () => setBrake(state.brake + 1));
-$('brake-down').addEventListener('click', () => setBrake(state.brake - 1));
 
 function resetRun() {
   state.position = 0;
@@ -474,9 +512,7 @@ window.addEventListener('keydown', event => {
       setBrake(Math.max(2, state.brake));
       break;
     case 'KeyB':
-      state.power = 0;
-      state.brake = 4;
-      state.emergency = true;
+      // Emergency braking is handled while B is held
       break;
     case 'KeyE':
       if (state.awaitingDeparture) {
@@ -523,6 +559,22 @@ case 'KeyC': {
 
   break;
 }
+  }
+});
+
+window.addEventListener('keydown', event => {
+  if (event.code === 'KeyB' && !event.repeat) {
+    state.power = 0;
+    state.brake = 0;
+    state.emergency = true;
+  }
+});
+
+window.addEventListener('keyup', event => {
+  if (event.code === 'KeyB') {
+    state.power = 0;
+    state.brake = 0;
+    state.emergency = false;
   }
 });
 

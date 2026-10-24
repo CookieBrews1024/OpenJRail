@@ -396,3 +396,680 @@ kbd {
 #safety-panel span {
   color: #c0d0da;
 }
+
+
+
+
+/* =========================================
+   OpenJRail — arcade train simulator HUD
+   ========================================= */
+
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #fff;
+  background: #080d10;
+}
+
+#simulator {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 480px;
+  overflow: hidden;
+  background: #101820;
+}
+
+.topbar {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 0;
+  padding: 10px 14px;
+  background: linear-gradient(#080d10dd, #080d1000);
+  pointer-events: none;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 3px;
+  background: #8bcf42;
+  color: #101820;
+  font-size: 17px;
+}
+
+.brand strong {
+  font-size: 15px;
+}
+
+.brand small {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.service-label {
+  font-size: 10px;
+  color: #dce9d4;
+}
+
+.service-label span {
+  color: #a7e64d;
+  font-size: 9px;
+}
+
+#game {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #8eb8d0;
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+}
+
+.hud {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.speed-panel,
+.route-panel {
+  position: absolute;
+  border: 2px solid #6c873c;
+  border-radius: 3px;
+  padding: 9px;
+  color: #fff;
+  background: rgb(10 17 19 / 88%);
+  backdrop-filter: none;
+  box-shadow: 0 2px 8px #0008;
+}
+
+.speed-panel {
+  left: 14px;
+  bottom: 74px;
+  top: auto;
+  width: 142px;
+  min-width: 0;
+}
+
+.eyebrow {
+  color: #c8e99a;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.speed-number {
+  justify-content: center;
+  gap: 5px;
+  margin: 5px 0;
+}
+
+.speed-number span {
+  font-family: "Courier New", monospace;
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 5px #b7ec6b55;
+}
+
+.speed-number small {
+  color: #d4dfd0;
+  font-size: 10px;
+}
+
+.speed-track {
+  height: 5px;
+  border: 1px solid #66735b;
+  border-radius: 0;
+  background: #222b22;
+}
+
+#speed-bar {
+  background: #b3e64f;
+}
+
+.speed-footer {
+  color: #c4d0bc;
+  font-size: 9px;
+}
+
+.route-panel {
+  right: 14px;
+  bottom: 74px;
+  top: auto;
+  width: 225px;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.route-panel strong {
+  color: #d6f17a;
+  font-size: 12px;
+}
+
+.route-panel div {
+  color: #d8e1d0;
+  font-size: 10px;
+}
+
+.route-panel b {
+  color: #fff;
+  font-family: "Courier New", monospace;
+}
+
+#challenge-info {
+  top: auto;
+  bottom: 14px;
+  left: auto;
+  right: 14px;
+  transform: none;
+  min-width: 225px;
+  padding: 8px 10px;
+  text-align: left;
+  color: #11180c;
+  background: #d5ef55;
+  border: 2px solid #f3ffad;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px #0008;
+}
+
+#challenge-info strong {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+#challenge-info span {
+  color: #26351a;
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+#safety-panel {
+  top: 64px;
+  bottom: auto;
+  left: 14px;
+  max-width: 220px;
+  padding: 8px 10px;
+  border: 2px solid #6c873c;
+  border-radius: 3px;
+  background: rgb(10 17 19 / 88%);
+  font-size: 10px;
+  box-shadow: 0 2px 8px #0008;
+}
+
+#safety-panel strong {
+  color: #d6f17a;
+  font-size: 11px;
+}
+
+#safety-panel span {
+  margin-bottom: 4px;
+  color: #e3e9dd;
+}
+
+.message {
+  z-index: 5;
+  left: 50%;
+  bottom: 14px;
+  padding: 7px 12px;
+  border: 1px solid #a4c85a;
+  border-radius: 2px;
+  color: #fff;
+  background: rgb(10 17 19 / 92%);
+  font-size: 10px;
+}
+
+.controls {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: calc(100% - 500px);
+  padding: 7px 10px;
+  gap: 10px;
+  flex-wrap: nowrap;
+  border: 2px solid #6c873c;
+  border-radius: 3px;
+  background: rgb(10 17 19 / 94%);
+  box-shadow: 0 2px 8px #0008;
+}
+
+.control-group {
+  gap: 4px;
+}
+
+.control-group .eyebrow {
+  font-size: 9px;
+}
+
+.control-group button,
+.notch {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #66735b;
+  border-radius: 2px;
+  background: #263326;
+  font-size: 15px;
+}
+
+.notch {
+  min-width: 35px;
+  color: #d6f17a;
+  background: #080d10;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+}
+
+.keyboard-help {
+  display: none;
+}
+
+.reset-button {
+  padding: 7px 9px;
+  border: 1px solid #66735b;
+  border-radius: 2px;
+  background: #263326;
+  font-size: 10px;
+}
+
+.difficulty-control {
+  pointer-events: auto;
+  font-size: 9px;
+}
+
+.difficulty-control select {
+  padding: 5px;
+  border-radius: 2px;
+  background: #111a14;
+  border-color: #6c873c;
+  font-size: 10px;
+}
+
+button:hover {
+  filter: brightness(1.25);
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    padding: 8px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .service-label {
+    font-size: 8px;
+  }
+
+  .speed-panel {
+    left: 8px;
+    bottom: 130px;
+    width: 112px;
+    padding: 6px;
+  }
+
+  .speed-number span {
+    font-size: 29px;
+  }
+
+  .route-panel {
+    right: 8px;
+    bottom: 130px;
+    width: 165px;
+    padding: 7px;
+  }
+
+  #challenge-info {
+    right: 8px;
+    bottom: 8px;
+    min-width: 165px;
+    max-width: 48%;
+  }
+
+  #safety-panel {
+    left: 8px;
+    top: 55px;
+    max-width: 165px;
+    padding: 6px;
+  }
+
+  .controls {
+    left: 8px;
+    bottom: 8px;
+    transform: none;
+    max-width: calc(100% - 16px);
+    padding: 5px;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    gap: 3px;
+  }
+
+  .control-group .eyebrow {
+    font-size: 8px;
+  }
+
+  .control-group button,
+  .notch {
+    width: 26px;
+    height: 28px;
+  }
+
+  .reset-button {
+    display: none;
+  }
+
+  .message {
+    bottom: 92px;
+    max-width: calc(100% - 16px);
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+
+/* Vertical Densha de Go-inspired controller */
+
+.controls {
+  position: absolute;
+  z-index: 12;
+  left: 18px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  width: 48px;
+  max-width: none;
+  display: block;
+  padding: 4px;
+  border: 2px solid #56634b;
+  border-radius: 0;
+  background: #090d0b;
+  box-shadow: 0 0 0 1px #000, 0 2px 8px #0009;
+}
+
+.notched-controller {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.controller-title {
+  overflow: hidden;
+  height: 10px;
+  color: #c8d6b7;
+  font-size: 5px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.notch-track {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px;
+  background: #111713;
+  border-left: 2px solid #4c554b;
+  border-right: 2px solid #4c554b;
+}
+
+.notch-option {
+  position: relative;
+  width: 100%;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  border: 1px solid #303a31;
+  border-radius: 0;
+  background: linear-gradient(90deg, #101512, #202722);
+  color: #899286;
+  font-family: Arial, sans-serif;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 14px;
+  text-align: center;
+  box-shadow: inset 0 1px #313a32;
+}
+
+.notch-option.active {
+  color: #081508;
+  background: #20ed70;
+  border-color: #a1ffb7;
+  box-shadow: 0 0 5px #25ff7755, inset 0 -2px #0e9d45;
+}
+
+.power-notch.active {
+  background: #22ef70;
+}
+
+.neutral-notch.active {
+  color: #fff;
+  background: #4c594c;
+  border-color: #a4b09e;
+  box-shadow: inset 0 0 4px #d3e5c4;
+}
+
+.brake-notch.active {
+  color: #111;
+  background: #a7ef39;
+  border-color: #d4ff83;
+  box-shadow: 0 0 5px #a7ef3955, inset 0 -2px #5c8b20;
+}
+
+.controller-base {
+  height: 13px;
+  margin-top: 3px;
+  background-color: #142016;
+  background-image:
+    linear-gradient(45deg, #42f22b 25%, transparent 25%),
+    linear-gradient(-45deg, #42f22b 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #42f22b 75%),
+    linear-gradient(-45deg, transparent 75%, #42f22b 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  border-top: 1px solid #8aff62;
+}
+
+.controls .keyboard-help,
+.controls .reset-button {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .controls {
+    left: 8px;
+    top: 48%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: 42px;
+    padding: 3px;
+  }
+
+  .notch-option {
+    height: 15px;
+    min-height: 15px;
+    line-height: 13px;
+  }
+}
+
+
+/* Analogue speedometer */
+
+.speed-panel.analogue-panel {
+  width: 178px;
+  min-width: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #101710ee;
+  border: 2px solid #72894b;
+  border-radius: 3px;
+}
+
+.gauge-heading {
+  width: 100%;
+  color: #d5ec9d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.speed-gauge {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gauge-face {
+  fill: #e3e6d7;
+}
+
+.gauge-rim {
+  fill: none;
+  stroke: #8b9b79;
+  stroke-width: 4;
+}
+
+.gauge-ticks {
+  fill: none;
+  stroke: #252d23;
+  stroke-width: 3;
+  stroke-linecap: square;
+}
+
+.gauge-numbers {
+  fill: #20291e;
+  font-size: 12px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+
+.needle-shadow {
+  fill: #777;
+}
+
+.needle {
+  fill: #d52222;
+  stroke: #851212;
+  stroke-width: 1;
+}
+
+.needle-hub {
+  fill: #252b24;
+  stroke: #f2f4e8;
+  stroke-width: 2;
+}
+
+.gauge-unit {
+  fill: #323a2d;
+  font-size: 10px;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+.gauge-digital {
+  fill: #10180f;
+  font-size: 16px;
+  font-weight: 900;
+  text-anchor: middle;
+}
+
+.limit-display {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 3px;
+  color: #f8f8ed;
+  background: #242d20;
+  border: 1px solid #697e47;
+}
+
+.limit-display span {
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.limit-display strong {
+  min-width: 26px;
+  padding: 2px 5px;
+  color: #151515;
+  background: #f5f5eb;
+  border: 2px solid #b8b8ad;
+  border-radius: 50%;
+  font-size: 13px;
+  text-align: center;
+}
+
+.limit-display small {
+  font-size: 8px;
+}
+
+.limit-display.overspeed {
+  border-color: #ff4545;
+  background: #661d1d;
+}
+
+.limit-display.overspeed strong {
+  background: #ff4848;
+  border-color: #ffb3b3;
+}
+
+@media (max-width: 600px) {
+  .speed-panel.analogue-panel {
+    width: 126px;
+    padding: 5px;
+  }
+
+  .gauge-heading {
+    font-size: 8px;
+  }
+
+  .gauge-numbers {
+    font-size: 13px;
+  }
+}
+
+
+/* Emergency brake indicator: black when inactive, red when active */
+.emergency-notch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #737373;
+  background: #050505;
+  border: 1px solid #383838;
+  font-family: Arial, sans-serif;
+  font-size: 8px;
+  font-weight: 900;
+  cursor: default;
+  box-shadow: none;
+}
+
+.emergency-notch.active {
+  color: #ffffff;
+  background: #ff0000;
+  border-color: #ff7777;
+  box-shadow:
+    0 0 5px #ff0000,
+    0 0 12px #ff0000;
+}

@@ -23,14 +23,56 @@
         <div id="scene"></div>
 
         <section class="hud">
-          <div class="speed-panel">
-            <span class="eyebrow">CURRENT SPEED</span>
-            <div class="speed-number"><span id="speed">0</span><small>km/h</small></div>
-            <div class="speed-track"><div id="speed-bar"></div></div>
-            <div class="speed-footer">
-              <span>0</span><span>40</span><span>80 km/h</span>
-            </div>
-          </div>
+          <div class="speed-panel analogue-panel">
+  <div class="gauge-heading">SPEED</div>
+
+  <svg class="speed-gauge" viewBox="0 0 200 200"
+       role="img" aria-label="Analogue speedometer in kilometres per hour">
+    <circle class="gauge-face" cx="100" cy="100" r="88"/>
+    <circle class="gauge-rim" cx="100" cy="100" r="88"/>
+
+    <g class="gauge-ticks">
+      <path d="M37 163 L48 152"/>
+      <path d="M20 100 L38 100"/>
+      <path d="M37 37 L50 50"/>
+      <path d="M100 18 L100 38"/>
+      <path d="M163 37 L150 50"/>
+      <path d="M180 100 L162 100"/>
+      <path d="M163 163 L150 150"/>
+    </g>
+
+    <g class="gauge-numbers">
+      <text x="45" y="145">0</text>
+      <text x="28" y="88">20</text>
+      <text x="47" y="47">40</text>
+      <text x="100" y="39">60</text>
+      <text x="153" y="47">80</text>
+      <text x="172" y="88">100</text>
+      <text x="151" y="145">120</text>
+    </g>
+
+    <g id="speed-needle" transform="rotate(-135 100 100)">
+      <path class="needle-shadow" d="M96 105 L100 43 L104 105 Z"/>
+      <path class="needle" d="M97 104 L100 43 L103 104 Z"/>
+    </g>
+
+    <circle class="needle-hub" cx="100" cy="100" r="7"/>
+    <text class="gauge-unit" x="100" y="126">km/h</text>
+    <text id="gauge-digital-speed" class="gauge-digital"
+          x="100" y="145">0</text>
+  </svg>
+
+  <div class="limit-display">
+    <span>SPEED LIMIT</span>
+    <strong id="speed-limit">80</strong>
+    <small>km/h</small>
+  </div>
+
+  <div class="speed-track" aria-hidden="true">
+    <div id="speed-bar"></div>
+  </div>
+</div>
+
 
           <div class="route-panel">
             <span class="eyebrow">ROUTE INFORMATION</span>
@@ -45,31 +87,42 @@
         <div class="message" id="message">READY · Increase power to depart</div>
       </main>
 
-      <footer class="controls">
-        <div class="control-group">
-          <span class="eyebrow">POWER</span>
-          <button id="power-down" aria-label="Reduce power">−</button>
-          <div class="notch" id="power-notch">N</div>
-          <button id="power-up" aria-label="Increase power">+</button>
-        </div>
+      
+<footer class="controls">
+  <div class="notched-controller">
+    <div class="controller-title">POWER / BRAKE</div>
 
-        <div class="control-group">
-          <span class="eyebrow">BRAKE</span>
-          <button id="brake-down" aria-label="Release brake">−</button>
-          <div class="notch" id="brake-notch">0</div>
-          <button id="brake-up" aria-label="Increase brake">+</button>
-        </div>
+    <div class="notch-track">
+      <button class="notch-option power-notch" data-mode="power" data-notch="3">3</button>
+      <button class="notch-option power-notch" data-mode="power" data-notch="2">2</button>
+      <button class="notch-option power-notch" data-mode="power" data-notch="1">1</button>
+      <button class="notch-option neutral-notch" data-mode="neutral">N</button>
+      <button class="notch-option brake-notch" data-mode="brake" data-notch="1">1</button>
+      <button class="notch-option brake-notch" data-mode="brake" data-notch="2">2</button>
+      <button class="notch-option brake-notch" data-mode="brake" data-notch="3">3</button>
+      <div
+  class="notch-option brake-notch emergency-notch"
+  data-mode="brake"
+  data-notch="4"
+  role="img"
+  aria-label="Emergency brake, 非常"
+>非常</div>
+    </div>
 
-        <div class="keyboard-help">
-          <span><kbd>W</kbd> Power</span>
-          <span><kbd>S</kbd> Power down</span>
-          <span><kbd>X</kbd> Coast</span>
-          <span><kbd>Space</kbd> Brake</span>
-          <span><kbd>B</kbd> Emergency</span>
-        </div>
+    <div class="controller-base"></div>
+  </div>
 
-        <button id="reset" class="reset-button">Reset run</button>
-      </footer>
+  <div class="keyboard-help">
+    <span><kbd>W</kbd> Power</span>
+    <span><kbd>S</kbd> Brake</span>
+    <span><kbd>X</kbd> Neutral</span>
+    <span><kbd>Space</kbd> Brake</span>
+    <span><kbd>B</kbd> Emergency</span>
+  </div>
+
+  <button id="reset" class="reset-button">Reset run</button>
+</footer>
+
     </div>
 
     <script type="module" src="/src/main.js"></script>
