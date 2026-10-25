@@ -349,7 +349,7 @@ function updateOverspeedAudio(isOverspeed) {
   if (!overspeedAudio || !overspeedGain) return;
 
   const now = overspeedAudio.currentTime;
-  const targetVolume = isOverspeed ? 5 : 0;
+  const targetVolume = isOverspeed ? 25 : 0;
 
   overspeedGain.gain.cancelScheduledValues(now);
   overspeedGain.gain.setTargetAtTime(

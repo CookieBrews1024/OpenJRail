@@ -817,9 +817,9 @@ button:hover {
   flex-direction: column;
   gap: 3px;
   padding: 3px;
-  background: #111713;
-  border-left: 2px solid #4c554b;
-  border-right: 2px solid #4c554b;
+  background: #11171354;
+  border-left: 2px solid #4c554b3b;
+  border-right: 2px solid #4c554b3b;
 }
 
 .notch-option {
