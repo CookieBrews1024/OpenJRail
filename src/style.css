@@ -790,21 +790,16 @@ button:hover {
   top: 50%;
   bottom: auto;
   transform: translateY(-50%);
-  width: 48px;
+
+  width: 82px;
   max-width: none;
   display: block;
   padding: 4px;
+
   border: 2px solid #56634b;
   border-radius: 0;
   background: #090d0b;
   box-shadow: 0 0 0 1px #000, 0 2px 8px #0009;
-}
-
-.notched-controller {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
 }
 
 .controller-title {
@@ -1072,4 +1067,437 @@ button:hover {
   box-shadow:
     0 0 5px #ff0000,
     0 0 12px #ff0000;
+}
+
+
+/* Keep the original power/brake controller layout */
+.notched-controller {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.gforce-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 32px;
+  min-width: 32px;
+  flex-shrink: 0;
+  color: #d7e6eb;
+  font-family: inherit;
+}
+
+.gforce-heading {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.gforce-bar {
+  position: relative;
+  display: block;
+  width: 4px;
+  height: 180px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: transparent;
+  border: 1px solid #a0b5a0;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.gforce-red-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  background: rgba(255, 45, 45, 0.35);
+  border-bottom: 1px solid #ff4545;
+}
+
+.gforce-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: #159447;
+  border: none;
+  z-index: 2;
+  transition: height 0.03s linear, background-color 0.12s linear;
+}
+
+.gforce-zero {
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 14px;
+  height: 2px;
+  background: #f1f5f6;
+  transform: translateY(-50%);
+}
+
+.gforce-value {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gforce-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 7px;
+  color: #9fb3bc;
+  text-align: center;
+}
+
+
+/* Keep the speed track at its original width */
+.speed-track-row {
+  display: block;
+  width: 100%;
+}
+
+.speed-track-row .speed-track {
+  width: 100%;
+  min-width: 100%;
+  flex: none;
+}
+
+/* Keep one compact G-force indicator below the speed gauge */
+.speed-track-row .gforce-panel {
+  display: flex;
+}
+
+/* Position the single G-force indicator below the speed gauge */
+
+.notched-controller .controller-controls {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  justify-content: start !important;
+  justify-items: start !important;
+  align-items: stretch !important;
+  column-gap: 5px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.notched-controller .controller-controls > .gforce-panel {
+  position: static !important;
+
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  justify-self: start !important;
+  align-self: center !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 18px !important;
+  min-width: 18px !important;
+  margin: 0 !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+.notched-controller .controller-controls > .notch-track {
+  grid-column: 2 !important;
+  justify-self: stretch !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.notched-controller .controller-controls {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  align-items: center !important;
+  justify-content: start !important;
+  column-gap: 5px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+
+@media (min-width: 761px) {
+  .speed-panel.analogue-panel {
+    left: clamp(300px, 10vw, 300px);
+    right: auto;
+    bottom: 14px;
+    top: auto;
+  }
+
+  .gforce-panel {
+    flex-shrink: 0;
+  }
+
+  .controls {
+    left: 16px;
+    right: auto;
+    bottom: 14px;
+    top: auto;
+    transform: none;
+  }
+}
+
+/* Brake air-pressure gauge */
+.brake-pressure-panel {
+  position: absolute;
+  left: clamp(110px, 27vw, 110px);
+  bottom: 14px;
+  width: 155px;
+  padding: 8px;
+  box-sizing: border-box;
+  color: #f0f0e8;
+  background: rgba(12, 18, 22, 0.94);
+  border: 1px solid #68747b;
+  border-radius: 8px;
+  text-align: center;
+  z-index: 12;
+}
+
+.brake-pressure-title {
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.brake-pressure-gauge {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pressure-face {
+  fill: #d9d6c9;
+  stroke: #68747b;
+  stroke-width: 2;
+}
+
+.pressure-ring {
+  fill: none;
+  stroke: #77766f;
+  stroke-width: 1;
+}
+
+.pressure-label {
+  fill: #242424;
+  font-size: 10px;
+  text-anchor: middle;
+}
+
+.pressure-needle {
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* MR = red needle */
+.mr-needle {
+  stroke: #d52e2e;
+  stroke-width: 3;
+}
+
+/* BC = black needle */
+.bc-needle {
+  stroke: #252525;
+  stroke-width: 2;
+}
+
+.pressure-hub {
+  fill: #333;
+}
+
+.pressure-legend {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.bc-legend {
+  fill: #252525;
+}
+
+.mr-legend {
+  fill: #ff5555;
+}
+
+.pressure-unit {
+  fill: #f0f0e8;
+  font-size: 10px;
+}
+
+.pressure-readings {
+  display: flex;
+  justify-content: space-around;
+  font-size: 10px;
+}
+
+#bc-pressure-value {
+  color: #252525;
+}
+
+#mr-pressure-value {
+  color: #ff5555;
+}
+
+
+/* Densha de Go-inspired speed-limit sign */
+.speed-limit-sign {
+  position: absolute;
+  left: 490px;
+  bottom: 28px;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 68px;
+  height: 68px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.speed-limit-label,
+.speed-limit-unit {
+  display: none;
+}
+
+.speed-limit-circle {
+  width: 64px;
+  height: 64px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #fff;
+  color: #111;
+  border: 6px solid #d71920;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px #0008;
+}
+
+.speed-limit-sign.overspeed .speed-limit-circle {
+  background: #fff;
+  border-color: #d71920;
+  box-shadow: 0 0 8px #ff333388;
+}
+
+@media (max-width: 600px) {
+  .speed-limit-sign {
+    left: 135px;
+    bottom: 145px;
+    transform: scale(0.85);
+    transform-origin: bottom left;
+  }
+}
+
+
+
+
+.speed-limit-sign {
+  position: absolute;
+  left: 490px;
+  bottom: 28px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.speed-limit-label {
+  display: block !important;
+  position: relative;
+  top: 9.5px;
+  left: 0px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.speed-limit-unit {
+  display: none !important;
+}
+
+.speed-limit-circle {
+  width: 64px;
+  height: 64px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #111;
+  border: 8px solid #fbf815;
+  border-radius: 60%;
+  box-shadow: 0 2px 4px #0008;
+  outline: 1.75px solid #ffffff;
+  outline-offset: 1px;
+}
+
+.speed-limit-circle strong {
+  display: block;
+  color: #111;
+  font-family: "Arial Narrow", "Roboto Condensed", sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  transform: scaleX(0.8);
+  position: relative;
+  top: -2px;
+}
+
+@media (max-width: 600px) {
+  .speed-limit-sign {
+    left: 135px;
+    bottom: 145px;
+    transform: scale(0.85);
+    transform-origin: bottom left;
+  }
+}
+
+
+.speed-limit-circle {
+  flex-direction: column;
+  gap: 0;
+}
+
+.speed-limit-circle strong {
+  line-height: 1;
+}
+
+.speed-limit-circle .speed-limit-unit {
+  display: block !important;
+  color: #111;
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+  margin-top: -8px;
+  
 }

@@ -109,7 +109,7 @@ for (let z = -25; z < 650; z += 19) {
   }
 }
 
-// Route and stations: all distances are metres along the track.
+// Route and stations
 const stations = [
   { name: 'Tokyo ', position: 150 },
   { name: 'Kanda', position: 320 },
@@ -234,10 +234,10 @@ loader.load(
   (gltf) => {
     const model = gltf.scene;
 
-    // Adjust these if the imported model is too large or small.
+    // Adjust if the imported model is too large or small.
     model.scale.setScalar(1.75);
 
-    // Keep the model centred on the track.
+    // Model centring on the track.
     model.position.set(0, 0, 0);
 
     train.add(model);
@@ -351,8 +351,54 @@ function scoreStation(station, missed = false) {
 
 function updateHUD() {
   const kmh = state.speed * 3.6;
+  const gaugeSpeed = Math.max(0, Math.min(120, kmh));
 
-const gaugeSpeed = Math.max(0, Math.min(120, kmh));
+  // Brake air-pressure gauge
+  const mrPressure = 800;
+
+  // E235-inspired brake cylinder pressure targets (kPa).
+  const brakeTargets = [0, 40, 85, 135];
+
+  // Regenerative braking takes priority above 20 km/h.
+  const regenerativePriority = state.speed * 3.6 > 20;
+
+  const bcPressure = state.emergency
+    ? 475
+    : regenerativePriority
+      ? 0
+      : brakeTargets[state.brake] ?? 0;
+
+  // MR remains stable while the compressor is simulated as maintaining pressure.
+  const mrAngle = 135;
+
+  // BC uses its own 0–450 kPa range.
+  const bcAngle = -135 + (bcPressure / 450) * 270;
+
+  const mrNeedle = $('mr-needle');
+  const bcNeedle = $('bc-needle');
+
+  if (mrNeedle) {
+    mrNeedle.setAttribute(
+      'transform',
+      `rotate(${mrAngle} 80 76)`
+    );
+  }
+
+  if (bcNeedle) {
+    bcNeedle.setAttribute(
+      'transform',
+      `rotate(${bcAngle} 80 76)`
+    );
+  }
+
+  if ($('mr-pressure-value')) {
+    $('mr-pressure-value').textContent = mrPressure;
+  }
+
+  if ($('bc-pressure-value')) {
+    $('bc-pressure-value').textContent = bcPressure;
+  }
+
 const needleAngle = -135 + (gaugeSpeed / 120) * 270;
 
 $('speed-needle').setAttribute(
@@ -365,7 +411,7 @@ $('gauge-digital-speed').textContent = Math.round(kmh);
 const limitKmh = route.speedLimit * 3.6;
 $('speed-limit').textContent = Math.round(limitKmh);
 
-document.querySelector('.limit-display').classList.toggle(
+document.querySelector('.speed-limit-sign')?.classList.toggle(
   'overspeed',
   kmh > limitKmh + 0.5
 );
@@ -374,9 +420,6 @@ document.querySelector('.limit-display').classList.toggle(
   const distance = station
     ? station.position - state.position
     : 0;
-
-  $('speed-bar').style.width =
-    `${Math.min(100, kmh / 80 * 100)}%`;
 
   $('distance').textContent =
     `${Math.round(state.position)} m`;
@@ -512,7 +555,7 @@ window.addEventListener('keydown', event => {
       setBrake(Math.max(2, state.brake));
       break;
     case 'KeyB':
-      // Emergency braking is handled while B is held
+      // Emergency braking when B is held
       break;
     case 'KeyE':
       if (state.awaitingDeparture) {
@@ -567,6 +610,7 @@ window.addEventListener('keydown', event => {
     state.power = 0;
     state.brake = 0;
     state.emergency = true;
+    state.emergencyMeterTime = 0;
   }
 });
 
@@ -610,6 +654,16 @@ function animate(now) {
     const braking = state.emergency ? 3.5 : state.brake * 0.7;
     const resistance = 0.025 + state.speed * 0.002;
     const acceleration = traction - braking - resistance;
+// Measure how abruptly acceleration changes (jerk)
+state.previousAcceleration ??= acceleration;
+
+state.jerk =
+  (acceleration - state.previousAcceleration) / Math.max(dt, 0.001);
+
+state.previousAcceleration = acceleration;
+
+// G-force reading based on the train's acceleration
+state.gForce = acceleration / 9.81;
 
     state.speed = Math.max(
       0,
@@ -664,6 +718,113 @@ if (activeSafetyTarget) {
 
   camera.position.lerp(desiredCamera, 1 - Math.exp(-4 * dt));
   camera.lookAt(target);
+
+ 
+  // G-force meter: normal braking is green; emergency braking
+  const fill = $('gforce-fill');
+  const value = $('gforce-value');
+
+  if (fill && value) {
+    state.displayGForce ??= 0;
+
+    if (state.emergency) {
+      state.emergencyMeterTime ??= 0;
+      if (state.speed > 0.1) {
+        state.emergencyMeterTime += dt;
+      } else {
+        state.emergencyMeterTime = 0;
+      }
+
+      // Green fills first, then yellow, then red.
+      const greenEnd = 0.74;
+const yellowEnd = 0.89;
+const fillSpeed = 0.925;
+const t = state.emergencyMeterTime;
+if (state.speed <= 0.1) {
+  state.displayGForce = Math.min(
+    state.displayGForce,
+    1
+  );
+}
+
+const greenDuration = greenEnd / fillSpeed;
+const yellowDuration = (yellowEnd - greenEnd) / fillSpeed;
+const redDuration = (1 - yellowEnd) / fillSpeed;
+
+let level;
+
+if (t < greenDuration) {
+  level = fillSpeed * t;
+} else if (t < greenDuration + yellowDuration) {
+  level = greenEnd + fillSpeed * (t - greenDuration);
+} else {
+  level = yellowEnd + fillSpeed *
+    Math.min(redDuration, t - greenDuration - yellowDuration);
+}
+
+level = Math.min(1, level);
+
+      const drainSpeed = 1.5;
+
+      if (state.speed <= 0.1) {
+        state.displayGForce = Math.max(
+          0,
+          state.displayGForce - drainSpeed * dt
+        );
+      } else {
+        state.displayGForce = level;
+      }
+
+      const displayLevel = state.displayGForce;
+      fill.style.height = `${displayLevel * 100}%`;
+
+      // Keep the colour zones aligned to the FULL meter height.
+fill.style.background = `
+  linear-gradient(
+    to top,
+    #19b85a 0%,
+    #19b85a 74%,
+    #ffd52a 74%,
+    #ffd52a 89%,
+    #ff3030 89%,
+    #ff3030 100%
+  )
+`;
+
+fill.style.backgroundSize = `100% ${100 / Math.max(level, 0.01)}%`;
+fill.style.backgroundPosition = 'bottom';
+fill.style.backgroundRepeat = 'no-repeat';
+
+      value.textContent = `${(displayLevel * 0.5).toFixed(2)} G`;
+    } else {
+      // Normal braking/acceleration never fills beyond the green zone.
+      const jerkIntensity = Math.min(
+        1,
+        Math.abs(state.jerk ?? 0) * 0.12
+      );
+
+        const targetG = state.speed <= 0.1
+          ? 0
+          : Math.min(0.74, jerkIntensity);
+        const response = state.speed <= 0.1
+        ? 2.2
+        : targetG > state.displayGForce ? 8 : 2.2;
+      const blend = 1 - Math.exp(-response * dt);
+
+      state.displayGForce +=
+        (targetG - state.displayGForce) * blend;
+
+      const level = Math.max(
+        0,
+        Math.min(0.74, state.displayGForce)
+      );
+
+      fill.style.height = `${level * 100}%`;
+      fill.style.background = '#19b85a';
+
+      value.textContent = `${(level * 0.5).toFixed(2)} G`;
+    }
+  }
 
   updateHUD();
   renderer.render(scene, camera);

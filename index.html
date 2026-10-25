@@ -23,56 +23,118 @@
         <div id="scene"></div>
 
         <section class="hud">
-          <div class="speed-panel analogue-panel">
-  <div class="gauge-heading">SPEED</div>
+          <div class="speed-limit-sign">
+            <span class="speed-limit-label">制限速度</span>
+            <div class="speed-limit-circle">
+              <strong id="speed-limit">80</strong>
+              <span class="speed-limit-unit">km/h</span>
+           </div>
+          </div>
 
-  <svg class="speed-gauge" viewBox="0 0 200 200"
-       role="img" aria-label="Analogue speedometer in kilometres per hour">
-    <circle class="gauge-face" cx="100" cy="100" r="88"/>
-    <circle class="gauge-rim" cx="100" cy="100" r="88"/>
 
-    <g class="gauge-ticks">
-      <path d="M37 163 L48 152"/>
-      <path d="M20 100 L38 100"/>
-      <path d="M37 37 L50 50"/>
-      <path d="M100 18 L100 38"/>
-      <path d="M163 37 L150 50"/>
-      <path d="M180 100 L162 100"/>
-      <path d="M163 163 L150 150"/>
-    </g>
+  
+<div class="speed-panel analogue-panel">
 
-    <g class="gauge-numbers">
-      <text x="45" y="145">0</text>
-      <text x="28" y="88">20</text>
-      <text x="47" y="47">40</text>
-      <text x="100" y="39">60</text>
-      <text x="153" y="47">80</text>
-      <text x="172" y="88">100</text>
-      <text x="151" y="145">120</text>
-    </g>
+  <div class="speed-layout">
 
-    <g id="speed-needle" transform="rotate(-135 100 100)">
-      <path class="needle-shadow" d="M96 105 L100 43 L104 105 Z"/>
-      <path class="needle" d="M97 104 L100 43 L103 104 Z"/>
-    </g>
+    <div class="speed-main">
+      <svg class="speed-gauge" viewBox="0 0 200 200"
+           role="img" aria-label="Analogue speedometer in kilometres per hour">
+        <circle class="gauge-face" cx="100" cy="100" r="88"/>
+        <circle class="gauge-rim" cx="100" cy="100" r="88"/>
 
-    <circle class="needle-hub" cx="100" cy="100" r="7"/>
-    <text class="gauge-unit" x="100" y="126">km/h</text>
-    <text id="gauge-digital-speed" class="gauge-digital"
-          x="100" y="145">0</text>
-  </svg>
+        <g class="gauge-ticks">
+          <path d="M37 163 L48 152"/>
+          <path d="M20 100 L38 100"/>
+          <path d="M37 37 L50 50"/>
+          <path d="M100 18 L100 38"/>
+          <path d="M163 37 L150 50"/>
+          <path d="M180 100 L162 100"/>
+          <path d="M163 163 L150 150"/>
+        </g>
 
-  <div class="limit-display">
-    <span>SPEED LIMIT</span>
-    <strong id="speed-limit">80</strong>
-    <small>km/h</small>
-  </div>
+        <g class="gauge-numbers">
+          <text x="45" y="145">0</text>
+          <text x="28" y="88">20</text>
+          <text x="47" y="47">40</text>
+          <text x="100" y="39">60</text>
+          <text x="153" y="47">80</text>
+          <text x="172" y="88">100</text>
+          <text x="151" y="145">120</text>
+        </g>
 
-  <div class="speed-track" aria-hidden="true">
-    <div id="speed-bar"></div>
+        <g id="speed-needle" transform="rotate(-135 100 100)">
+          <path class="needle-shadow" d="M96 105 L100 43 L104 105 Z"/>
+          <path class="needle" d="M97 104 L100 43 L103 104 Z"/>
+        </g>
+
+        <circle class="needle-hub" cx="100" cy="100" r="7"/>
+        <text class="gauge-unit" x="100" y="126">km/h</text>
+        <text id="gauge-digital-speed" class="gauge-digital"
+              x="100" y="145">0</text>
+
+        <text
+          x="-50"
+          y="184"
+          fill="#f0f0e8"
+          font-size="24"
+          font-weight="bold"
+          text-anchor="start"
+        >
+          現在速度
+        </text>
+      </svg>
+
+      
+<div class="speed-track-row">
+
+
+</div>
+    </div>
   </div>
 </div>
 
+<!-- NEW: Brake pressure gauge -->
+<div class="brake-pressure-panel">
+  <div class="brake-pressure-title">BRAKE PRESSURE</div>
+
+  <svg class="brake-pressure-gauge"
+       viewBox="0 0 160 145"
+       role="img"
+       aria-label="Brake cylinder and main reservoir pressure">
+
+    <circle cx="80" cy="76" r="59" class="pressure-face"/>
+    <circle cx="80" cy="76" r="51" class="pressure-ring"/>
+
+    <text x="29" y="91" class="pressure-label">0</text>
+    <text x="23" y="57" class="pressure-label">200</text>
+    <text x="72" y="27" class="pressure-label">400</text>
+    <text x="118" y="57" class="pressure-label">600</text>
+    <text x="119" y="91" class="pressure-label">800</text>
+
+    <g id="bc-needle" transform="rotate(-135 80 76)">
+      <line x1="80" y1="76" x2="80" y2="31"
+            class="pressure-needle bc-needle"/>
+    </g>
+
+    <g id="mr-needle" transform="rotate(0 80 76)">
+      <line x1="80" y1="76" x2="80" y2="35"
+            class="pressure-needle mr-needle"/>
+    </g>
+
+    <circle cx="80" cy="76" r="5" class="pressure-hub"/>
+
+    <text x="48" y="117" class="pressure-legend bc-legend">BC</text>
+    <text x="83" y="117" class="pressure-legend mr-legend">MR</text>
+    <text x="80" y="137" text-anchor="middle"
+          class="pressure-unit">kPa</text>
+  </svg>
+
+  <div class="pressure-readings">
+    <span>BC <strong id="bc-pressure-value">0</strong></span>
+    <span>MR <strong id="mr-pressure-value">800</strong></span>
+  </div>
+</div>
 
           <div class="route-panel">
             <span class="eyebrow">ROUTE INFORMATION</span>
@@ -92,6 +154,21 @@
   <div class="notched-controller">
     <div class="controller-title">POWER / BRAKE</div>
 
+
+    <div class="controller-controls">
+  <div class="gforce-panel">
+    <div class="gforce-heading">INERTIA</div>
+
+    <div class="gforce-bar">
+      <div class="gforce-red-zone"></div>
+      <div id="gforce-fill" class="gforce-fill"></div>
+    </div>
+
+    <div id="gforce-value" class="gforce-value">0.00</div>
+  </div>
+
+
+
     <div class="notch-track">
       <button class="notch-option power-notch" data-mode="power" data-notch="3">3</button>
       <button class="notch-option power-notch" data-mode="power" data-notch="2">2</button>
@@ -108,6 +185,8 @@
   aria-label="Emergency brake, 非常"
 >非常</div>
     </div>
+
+  </div>
 
     <div class="controller-base"></div>
   </div>
