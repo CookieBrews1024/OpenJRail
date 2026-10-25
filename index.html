@@ -94,47 +94,69 @@
   </div>
 </div>
 
-<!-- NEW: Brake pressure gauge -->
 <div class="brake-pressure-panel">
-  <div class="brake-pressure-title">BRAKE PRESSURE</div>
-
   <svg class="brake-pressure-gauge"
        viewBox="0 0 160 145"
        role="img"
-       aria-label="Brake cylinder and main reservoir pressure">
+       aria-label="Brake cylinder and main reservoir pressure, 0 to 1000 kPa">
 
-    <circle cx="80" cy="76" r="59" class="pressure-face"/>
-    <circle cx="80" cy="76" r="51" class="pressure-ring"/>
+    <defs>
+      <linearGradient id="pressure-face-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#171b1f"/>
+        <stop offset="100%" stop-color="#080a0c"/>
+      </linearGradient>
+    </defs>
 
-    <text x="29" y="91" class="pressure-label">0</text>
-    <text x="23" y="57" class="pressure-label">200</text>
-    <text x="72" y="27" class="pressure-label">400</text>
-    <text x="118" y="57" class="pressure-label">600</text>
-    <text x="119" y="91" class="pressure-label">800</text>
+    <!-- Dial face and inner bezel -->
+    <circle cx="80" cy="76" r="59"
+            fill="url(#pressure-face-gradient)"
+            class="pressure-face"/>
+    <circle cx="80" cy="76" r="53"
+            fill="none" stroke="#687078" stroke-width="1.5"/>
+    <circle cx="80" cy="76" r="49"
+            fill="none" stroke="#30363c" stroke-width="1"/>
 
-    <g id="bc-needle" transform="rotate(-135 80 76)">
-      <line x1="80" y1="76" x2="80" y2="31"
-            class="pressure-needle bc-needle"/>
-    </g>
+    <!-- Normal main-reservoir range: 780–900 kPa -->
+    <path id="reservoir-normal-band"
+          d=""
+          fill="#e53935"
+          fill-opacity="0.28"
+          stroke="none"/>
 
-    <g id="mr-needle" transform="rotate(0 80 76)">
+    <!-- Tick marks and labels are created by JavaScript -->
+    <g id="pressure-ticks"></g>
+    <g id="pressure-labels"></g>
+
+    <!-- Main reservoir pressure: red needle -->
+    <g id="mr-needle" transform="rotate(88.8 80 76)">
       <line x1="80" y1="76" x2="80" y2="35"
-            class="pressure-needle mr-needle"/>
+            class="pressure-needle mr-needle"
+            stroke="#ed3434"
+            stroke-width="2.4"
+            stroke-linecap="round"/>
     </g>
 
-    <circle cx="80" cy="76" r="5" class="pressure-hub"/>
+    <!-- Brake/door pneumatic pressure: black needle -->
+    <g id="bc-needle" transform="rotate(-120 80 76)">
+      <line x1="80" y1="76" x2="80" y2="31"
+            class="pressure-needle bc-needle"
+            stroke="#050607"
+            stroke-width="2.8"
+            stroke-linecap="round"/>
+    </g>
 
-    <text x="48" y="117" class="pressure-legend bc-legend">BC</text>
-    <text x="83" y="117" class="pressure-legend mr-legend">MR</text>
-    <text x="80" y="137" text-anchor="middle"
-          class="pressure-unit">kPa</text>
+    <!-- Needle hub -->
+    <circle cx="80" cy="76" r="5"
+            fill="#d5d8da"
+            stroke="#454a4f"
+            stroke-width="1.2"/>
+
+    <text x="105.5" y="103"
+          text-anchor="middle"
+          class="kPa-kPa">kPa</text>
   </svg>
-
-  <div class="pressure-readings">
-    <span>BC <strong id="bc-pressure-value">0</strong></span>
-    <span>MR <strong id="mr-pressure-value">800</strong></span>
-  </div>
 </div>
+
 
           <div class="route-panel">
             <span class="eyebrow">ROUTE INFORMATION</span>

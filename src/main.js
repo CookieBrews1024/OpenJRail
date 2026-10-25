@@ -307,6 +307,58 @@ const state = {
   message: 'READY · Increase power to depart'
 };
 
+
+/* Overspeed warning: low-frequency bass rumble */
+let overspeedAudio = null;
+let overspeedOscillator = null;
+let overspeedGain = null;
+let autoOverspeedBrake = false;
+let autoOverspeedAppliedBrake = false;
+
+function startOverspeedAudio() {
+  const AudioContextClass =
+    window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) return;
+
+  if (!overspeedAudio) {
+    overspeedAudio = new AudioContextClass();
+
+    overspeedOscillator = overspeedAudio.createOscillator();
+    overspeedGain = overspeedAudio.createGain();
+
+    // Low bass tone; headphones may reproduce it more clearly.
+    overspeedOscillator.type = 'sine';
+    overspeedOscillator.frequency.value = 160;
+
+    overspeedGain.gain.value = 0;
+
+    overspeedOscillator.connect(overspeedGain);
+    overspeedGain.connect(overspeedAudio.destination);
+    overspeedOscillator.start();
+  }
+
+  if (overspeedAudio.state === 'suspended') {
+    overspeedAudio.resume();
+  }
+}
+
+game.addEventListener('pointerdown', startOverspeedAudio);
+
+function updateOverspeedAudio(isOverspeed) {
+  if (!overspeedAudio || !overspeedGain) return;
+
+  const now = overspeedAudio.currentTime;
+  const targetVolume = isOverspeed ? 5 : 0;
+
+  overspeedGain.gain.cancelScheduledValues(now);
+  overspeedGain.gain.setTargetAtTime(
+    targetVolume,
+    now,
+    0.8
+  );
+}
+
 function setPower(value) {
   if (state.awaitingDeparture) return;
   state.power = THREE.MathUtils.clamp(value, 0, 3);
@@ -349,14 +401,55 @@ function scoreStation(station, missed = false) {
   return total;
 }
 
+// Main reservoir pressure simulation
+let mainReservoirPressure = 870;
+let mrRecoveryStartPressure = 870;
+let mrRecoveryStartTime = 0;
+let mrRecoveryDuration = 20000;
+
+let previousBrakeLevel = 0;
+let previousEmergencyState = false;
+
 function updateHUD() {
   const kmh = state.speed * 3.6;
   const gaugeSpeed = Math.max(0, Math.min(120, kmh));
 
-  // Brake air-pressure gauge
-  const mrPressure = 800;
+// Brake air-pressure gauge
+// Main reservoir pressure: drops when braking.
+const now = performance.now();
 
-  // E235-inspired brake cylinder pressure targets (kPa).
+const brakeApplied =
+  state.brake > previousBrakeLevel ||
+  (state.emergency && !previousEmergencyState);
+
+if (brakeApplied) {
+  const pressureDrop = 5 + Math.random() * 10;
+
+  mainReservoirPressure = Math.max(
+    0,
+    mainReservoirPressure - pressureDrop
+  );
+
+  mrRecoveryStartPressure = mainReservoirPressure;
+  mrRecoveryStartTime = now;
+  mrRecoveryDuration = 10000 + Math.random() * 20000;
+}
+
+previousBrakeLevel = state.brake;
+previousEmergencyState = state.emergency;
+
+// Recover smoothly to 870 kPa.
+if (mainReservoirPressure < 870) {
+  const elapsed = now - mrRecoveryStartTime;
+  const progress = Math.min(1, elapsed / mrRecoveryDuration);
+
+  mainReservoirPressure =
+    mrRecoveryStartPressure +
+    (870 - mrRecoveryStartPressure) * progress;
+}
+
+const mrPressure = mainReservoirPressure;
+  // Brake cylinder pressure targets (kPa).
   const brakeTargets = [0, 40, 85, 135];
 
   // Regenerative braking takes priority above 20 km/h.
@@ -368,11 +461,9 @@ function updateHUD() {
       ? 0
       : brakeTargets[state.brake] ?? 0;
 
-  // MR remains stable while the compressor is simulated as maintaining pressure.
-  const mrAngle = 135;
-
-  // BC uses its own 0–450 kPa range.
-  const bcAngle = -135 + (bcPressure / 450) * 270;
+  // Both needles use the new 0–1000 kPa dial scale.
+const mrAngle = 240 + (mrPressure / 1000) * 240;
+const bcAngle = 240 + (bcPressure / 1000) * 240;
 
   const mrNeedle = $('mr-needle');
   const bcNeedle = $('bc-needle');
@@ -528,6 +619,8 @@ $('reset').addEventListener('click', resetRun);
 
 // Keyboard controls
 window.addEventListener('keydown', event => {
+    startOverspeedAudio();
+
   if (['Space', 'ArrowUp', 'ArrowDown'].includes(event.code)) {
     event.preventDefault();
   }
@@ -646,8 +739,42 @@ function animate(now) {
 
   state.elapsed += dt;
 
-  if (!state.awaitingDeparture && state.stationIndex < stations.length) {
-    const station = stations[state.stationIndex];
+  
+if (!state.awaitingDeparture && state.stationIndex < stations.length) {
+  // Automatic overspeed protection
+  const targetSpeed = Math.max(0, route.speedLimit - 5 / 3.6);
+
+  if (!state.emergency && state.speed > route.speedLimit) {
+    autoOverspeedBrake = true;
+  }
+
+  if (autoOverspeedBrake && !state.emergency) {
+    state.power = 0;
+
+    // Apply a gentle brake without increasing a stronger player brake.
+    if (state.brake === 0) {
+      state.brake = 1;
+      autoOverspeedAppliedBrake = true;
+    }
+
+    // Release the automatic brake 5 km/h below the limit.
+    if (state.speed <= targetSpeed) {
+      autoOverspeedBrake = false;
+
+      if (autoOverspeedAppliedBrake && state.brake === 1) {
+        state.brake = 0;
+      }
+
+      autoOverspeedAppliedBrake = false;
+    }
+  }
+
+  updateOverspeedAudio(
+    state.speed > route.speedLimit && !state.emergency
+  );
+
+  const station = stations[state.stationIndex];
+
     const difficulty = currentDifficulty();
 
     const traction = state.power * 0.55;
@@ -831,3 +958,68 @@ fill.style.backgroundRepeat = 'no-repeat';
 }
 
 requestAnimationFrame(animate);
+
+
+function buildBrakePressureScale() {
+  const svg = document.querySelector(".brake-pressure-gauge");
+  if (!svg) return;
+
+  const ticks = svg.querySelector("#pressure-ticks");
+  const labels = svg.querySelector("#pressure-labels");
+  const band = svg.querySelector("#reservoir-normal-band");
+  if (!ticks || !labels || !band) return;
+
+  const ns = "http://www.w3.org/2000/svg";
+  const cx = 80, cy = 76;
+  const angleFor = value => (150 + value * 0.24) * Math.PI / 180;
+  const point = (r, a) => ({
+    x: cx + r * Math.cos(a),
+    y: cy + r * Math.sin(a)
+  });
+
+  ticks.replaceChildren();
+  labels.replaceChildren();
+
+  // Red operating band from 780 to 900 kPa.
+  const a1 = angleFor(780), a2 = angleFor(900);
+  const p1 = point(49, a1), p2 = point(49, a2);
+  const p3 = point(43, a2), p4 = point(43, a1);
+
+  band.setAttribute("d",
+    `M ${p1.x} ${p1.y} A 49 49 0 0 1 ${p2.x} ${p2.y} ` +
+    `L ${p3.x} ${p3.y} A 43 43 0 0 0 ${p4.x} ${p4.y} Z`
+  );
+
+  // 20 kPa between ticks; longer ticks every 100 kPa.
+  for (let value = 0; value <= 1000; value += 20) {
+    const major = value % 100 === 0;
+    const angle = angleFor(value);
+    const start = point(major ? 38 : 43, angle);
+    const end = point(49, angle);
+    const line = document.createElementNS(ns, "line");
+
+    line.setAttribute("x1", start.x);
+    line.setAttribute("y1", start.y);
+    line.setAttribute("x2", end.x);
+    line.setAttribute("y2", end.y);
+    line.setAttribute("stroke", "#f4f4f4");
+    line.setAttribute("stroke-width", major ? 2.2 : 1);
+    ticks.appendChild(line);
+  }
+
+  // Labels every 200 kPa; 500 at the top stays unlabeled.
+  for (let value = 0; value <= 1000; value += 200) {
+    const p = point(29, angleFor(value));
+    const text = document.createElementNS(ns, "text");
+
+    text.setAttribute("x", p.x);
+    text.setAttribute("y", p.y);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("class", "pressure-label");
+    text.textContent = value;
+    labels.appendChild(text);
+  }
+}
+
+buildBrakePressureScale();
