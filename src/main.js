@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
+import { createTileWorld } from './tiles/TileWorld.js';
 
 const $ = id => document.getElementById(id);
 const root = $('scene');
@@ -11,6 +12,20 @@ scene.background = new THREE.Color(0x9bc7e0);
 scene.fog = new THREE.Fog(0x9bc7e0, 100, 420);
 
 const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 700);
+
+// Free camera controls
+const freeCam = {
+  enabled: false,
+  speed: 18,
+  keys: new Set(),
+  yaw: 0,
+  pitch: 0,
+  sensitivity: 0.0025,
+  dragging: false,
+  lastX: 0,
+  lastY: 0
+};
+
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   powerPreference: 'low-power'
@@ -19,6 +34,20 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 root.appendChild(renderer.domElement);
+// 3D Tiles world — disabled until a tileset URL is configured.
+const TILESET_URL =
+  'https://api.plateauview.mlit.go.jp/datacatalog/3dtiles/13101-bldg-lod1-latest/tileset.json';
+
+let tileWorld = null;
+
+if (TILESET_URL) {
+  tileWorld = createTileWorld({
+    scene,
+    camera,
+    renderer,
+    url: TILESET_URL,
+  });
+}
 
 scene.add(new THREE.HemisphereLight(0xd9efff, 0x647452, 2));
 
@@ -54,16 +83,82 @@ const buildingMats = [
   mat(0xaaaeb5)
 ];
 
-// Ground and track
+// Ground and track — dimensions in metres
 box(scene, [200, 0.5, 850], [0, -0.5, 300], grass);
-box(scene, [4.2, 0.22, 850], [0, -0.18, 300], ballast);
 
-for (const x of [-1.12, 1.12]) {
+// Ballast bed
+box(scene, [3.0, 0.22, 850], [0, -0.18, 300], ballast);
+
+// Japanese 1,067 mm gauge
+// Rail width is 0.14 m, so centres are 0.6035 m from the track centre.
+for (const x of [-0.6035, 0.6035]) {
   box(scene, [0.14, 0.16, 850], [x, 0, 300], railMat);
 }
 
-for (let z = -120; z < 730; z += 2) {
-  box(scene, [3.2, 0.16, 0.34], [0, -0.02, z], sleeperMat);
+// Sleepers: 2.4 m long, spaced every 0.6 m
+for (let z = -120; z < 730; z += 0.6) {
+  box(scene, [2.4, 0.16, 0.34], [0, -0.02, z], sleeperMat);
+}
+
+// Overhead railway electrification — dimensions in metres
+const poleMat = new THREE.MeshStandardMaterial({
+  color: 0x555b60,
+  metalness: 0.65,
+  roughness: 0.45
+});
+
+const wireMat = new THREE.MeshStandardMaterial({
+  color: 0x292d31,
+  metalness: 0.55,
+  roughness: 0.4
+});
+
+// Create a cylinder between two 3D points
+function addWireSegment(start, end, radius, material) {
+  const a = new THREE.Vector3(...start);
+  const b = new THREE.Vector3(...end);
+  const direction = new THREE.Vector3().subVectors(b, a);
+  const length = direction.length();
+
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, length, 6),
+    material
+  );
+
+  mesh.position.copy(a).add(b).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    direction.normalize()
+  );
+
+  scene.add(mesh);
+}
+
+// Support poles and crossarms along the route
+for (let z = -100; z < 700; z += 30) {
+  for (const x of [-3.2, 3.2]) {
+    // Vertical support pole
+    box(scene, [0.12, 6.5, 0.12], [x, 3.25, z], poleMat);
+
+    // Crossarm reaches over the railway
+    box(scene, [2.8, 0.10, 0.10], [x < 0 ? -1.8 : 1.8, 6.2, z], poleMat);
+  }
+
+  // Contact wire above the track
+  addWireSegment(
+    [0, 5.5, z],
+    [0, 5.5, z + 30],
+    0.025,
+    wireMat
+  );
+
+  // Supporting cross-route wire
+  addWireSegment(
+    [-3.2, 6.2, z],
+    [3.2, 6.2, z],
+    0.035,
+    wireMat
+  );
 }
 
 // Buildings and trees
@@ -232,13 +327,33 @@ const loader = new GLTFLoader();
 loader.load(
   '/models/yamanote-e235.glb',
   (gltf) => {
-    const model = gltf.scene;
+const model = gltf.scene;
 
-    // Adjust if the imported model is too large or small.
-    model.scale.setScalar(1.75);
+// Provisional scale: approximately 1 Three.js unit per metre.
+model.scale.setScalar(0.94);
+model.position.set(0, 0, 0);
 
-    // Model centring on the track.
-    model.position.set(0, 0, 0);
+// Measure the scaled model before aligning it.
+model.updateMatrixWorld(true);
+
+const box = new THREE.Box3().setFromObject(model);
+const size = box.getSize(new THREE.Vector3());
+const centre = box.getCenter(new THREE.Vector3());
+
+// Centre the train on the track and put its lowest point at ground level.
+model.position.set(
+  -centre.x,
+  -box.min.y,
+  -centre.z
+);
+
+model.updateMatrixWorld(true);
+
+console.log('Train dimensions after provisional scaling:', {
+  width: size.x.toFixed(3),
+  height: size.y.toFixed(3),
+  length: size.z.toFixed(3)
+});
 
     train.add(model);
     console.log('Custom train model loaded!');
@@ -617,6 +732,121 @@ function resetRun() {
 
 $('reset').addEventListener('click', resetRun);
 
+// Free camera: P toggles it; WASD moves; right mouse looks around.
+function toggleFreeCam() {
+  freeCam.enabled = !freeCam.enabled;
+  freeCam.keys.clear();
+  freeCam.dragging = false;
+
+  if (freeCam.enabled) {
+    // Start looking in the direction the camera currently faces.
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+
+    freeCam.yaw = Math.atan2(direction.x, -direction.z);
+    freeCam.pitch = Math.asin(
+      THREE.MathUtils.clamp(direction.y, -1, 1)
+    );
+
+    game.classList.add('free-camera-active');
+    state.message = 'FREE CAMERA · WASD move · Right-click drag to look · P to exit';
+  } else {
+    game.classList.remove('free-camera-active');
+    state.message = 'DRIVING CAMERA RESTORED';
+  }
+}
+
+function updateFreeCam(dt) {
+  if (!freeCam.enabled) return;
+
+  const forward = new THREE.Vector3(
+    -Math.sin(freeCam.yaw),
+    0,
+    -Math.cos(freeCam.yaw)
+  );
+
+  const right = new THREE.Vector3(
+    Math.cos(freeCam.yaw),
+    0,
+    -Math.sin(freeCam.yaw)
+  );
+
+  const movement = new THREE.Vector3();
+
+  if (freeCam.keys.has('KeyW')) movement.add(forward);
+  if (freeCam.keys.has('KeyS')) movement.sub(forward);
+  if (freeCam.keys.has('KeyD')) movement.add(right);
+  if (freeCam.keys.has('KeyA')) movement.sub(right);
+
+  // Vertical free-camera movement
+if (freeCam.keys.has('Space')) movement.y += 1;
+if (freeCam.keys.has('ShiftLeft') || freeCam.keys.has('ShiftRight')) {
+  movement.y -= 1;
+}
+
+  if (movement.lengthSq() > 0) {
+    movement.normalize();
+    camera.position.addScaledVector(movement, freeCam.speed * dt);
+  }
+
+  const lookDirection = new THREE.Vector3(
+    -Math.sin(freeCam.yaw) * Math.cos(freeCam.pitch),
+    Math.sin(freeCam.pitch),
+    -Math.cos(freeCam.yaw) * Math.cos(freeCam.pitch)
+  );
+
+  camera.lookAt(
+    camera.position.clone().add(lookDirection)
+  );
+}
+
+renderer.domElement.addEventListener('contextmenu', event => {
+  if (freeCam.enabled) event.preventDefault();
+});
+
+renderer.domElement.addEventListener('pointerdown', event => {
+  if (!freeCam.enabled || event.button !== 2) return;
+
+  event.preventDefault();
+  freeCam.dragging = true;
+  freeCam.lastX = event.clientX;
+  freeCam.lastY = event.clientY;
+
+  renderer.domElement.setPointerCapture(event.pointerId);
+});
+
+renderer.domElement.addEventListener('pointermove', event => {
+  if (!freeCam.enabled || !freeCam.dragging) return;
+
+  const dx = event.clientX - freeCam.lastX;
+  const dy = event.clientY - freeCam.lastY;
+
+  freeCam.lastX = event.clientX;
+  freeCam.lastY = event.clientY;
+
+  freeCam.yaw -= dx * freeCam.sensitivity;
+  freeCam.pitch -= dy * freeCam.sensitivity;
+
+  freeCam.pitch = THREE.MathUtils.clamp(
+    freeCam.pitch,
+    -Math.PI / 2 + 0.01,
+    Math.PI / 2 - 0.01
+  );
+});
+
+renderer.domElement.addEventListener('pointerup', event => {
+  if (event.button === 2) freeCam.dragging = false;
+});
+
+renderer.domElement.addEventListener('pointercancel', () => {
+  freeCam.dragging = false;
+});
+
+window.addEventListener('blur', () => {
+  freeCam.keys.clear();
+  freeCam.dragging = false;
+});
+
 // Keyboard controls
 window.addEventListener('keydown', event => {
     startOverspeedAudio();
@@ -624,6 +854,22 @@ window.addEventListener('keydown', event => {
   if (['Space', 'ArrowUp', 'ArrowDown'].includes(event.code)) {
     event.preventDefault();
   }
+   if (event.code === 'KeyP' && !event.repeat) {
+    toggleFreeCam();
+    return;
+  }
+
+  if (freeCam.enabled) {
+    if (
+      ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight']
+        .includes(event.code)
+    ) {
+      event.preventDefault();
+      freeCam.keys.add(event.code);
+    }
+    return;
+  }
+
   if (event.repeat) return;
 
   switch (event.code) {
@@ -696,6 +942,10 @@ case 'KeyC': {
   break;
 }
   }
+});
+
+window.addEventListener('keyup', event => {
+  freeCam.keys.delete(event.code);
 });
 
 window.addEventListener('keydown', event => {
@@ -840,11 +1090,15 @@ if (activeSafetyTarget) {
 }
   train.position.z = state.position;
 
-  const target = new THREE.Vector3(0, 1.4, state.position + 7);
-  const desiredCamera = new THREE.Vector3(0, 5.5, state.position - 13);
+   if (freeCam.enabled) {
+    updateFreeCam(dt);
+  } else {
+    const target = new THREE.Vector3(0, 1.4, state.position + 7);
+    const desiredCamera = new THREE.Vector3(0, 5.5, state.position - 13);
 
-  camera.position.lerp(desiredCamera, 1 - Math.exp(-4 * dt));
-  camera.lookAt(target);
+    camera.position.lerp(desiredCamera, 1 - Math.exp(-4 * dt));
+    camera.lookAt(target);
+  }
 
  
   // G-force meter: normal braking is green; emergency braking
@@ -954,6 +1208,7 @@ fill.style.backgroundRepeat = 'no-repeat';
   }
 
   updateHUD();
+  tileWorld?.update();
   renderer.render(scene, camera);
 }
 
