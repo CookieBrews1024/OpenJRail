@@ -16,7 +16,7 @@ const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 700);
 // Free camera controls
 const freeCam = {
   enabled: false,
-  speed: 18,
+  speed: 30,
   keys: new Set(),
   yaw: 0,
   pitch: 0,
@@ -59,6 +59,50 @@ function mat(color, roughness = 0.9) {
   return new THREE.MeshStandardMaterial({ color, roughness });
 }
 
+
+function createApartmentFacadeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+
+  const ctx = canvas.getContext('2d');
+
+  // Warm grey concrete
+  ctx.fillStyle = '#b8b6ae';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Subtle horizontal concrete floor bands
+  for (let y = 0; y < 512; y += 64) {
+    ctx.fillStyle = '#a5a39c';
+    ctx.fillRect(0, y, 512, 4);
+
+    // Windows across each floor
+    for (let x = 24; x < 512; x += 96) {
+      ctx.fillStyle = '#343f49';
+      ctx.fillRect(x, y + 12, 54, 38);
+
+      // Slightly lighter window reflection
+      ctx.fillStyle = '#70828a';
+      ctx.fillRect(x + 5, y + 17, 18, 28);
+
+      // Window frame
+      ctx.fillStyle = '#d0cec6';
+      ctx.fillRect(x + 25, y + 12, 3, 38);
+      ctx.fillRect(x, y + 48, 54, 3);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const apartmentFacadeMat = new THREE.MeshStandardMaterial({
+  map: createApartmentFacadeTexture(),
+  roughness: 0.9
+});
+
+
 function box(parent, size, position, material) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size), material
@@ -78,8 +122,11 @@ const windowMat = mat(0x31546a, 0.35);
 const platformMat = mat(0xb5b4a9);
 const yellowMat = mat(0xffd447);
 const buildingMats = [
-  mat(0xc6b9a3), mat(0xd7d9d4),
-  mat(0xb8c7ce), mat(0xd0b9a8),
+  apartmentFacadeMat,
+  mat(0xc6b9a3),
+  mat(0xd7d9d4),
+  mat(0xb8c7ce),
+  mat(0xd0b9a8),
   mat(0xaaaeb5)
 ];
 
