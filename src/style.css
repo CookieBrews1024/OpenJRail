@@ -1542,3 +1542,211 @@ button:hover {
   overflow: hidden;
 }
 
+/* Free Camera city map window */
+#city-map-panel {
+  display: none;
+  position: absolute;
+  z-index: 20;
+
+  /* Default position: top-right */
+  top: 64px;
+  right: 18px;
+  left: auto;
+
+  /* Adjustable size */
+  width: 320px;
+  height: 260px;
+  min-width: 200px;
+  min-height: 160px;
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
+
+  flex-direction: column;
+  overflow: hidden;
+  resize: both;
+
+  color: #eef4e8;
+  background: rgba(9, 17, 15, 0.94);
+  border: 2px solid #72894b;
+  box-shadow: 0 4px 18px #0009;
+  font-family: Arial, sans-serif;
+}
+
+.free-camera-active #city-map-panel {
+  display: flex;
+}
+
+#city-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 9px 11px;
+
+  color: #d6f17a;
+  background: #202b20;
+  border-bottom: 1px solid #72894b;
+
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+}
+
+#city-map-status {
+  color: #a9c78a;
+  font-size: 8px;
+}
+
+#city-map-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.city-map-placeholder {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-content: center;
+  text-align: center;
+  color: #d6f17a;
+  background:
+    linear-gradient(rgba(110, 140, 90, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 140, 90, 0.12) 1px, transparent 1px),
+    #111b17;
+  background-size: 20px 20px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.city-map-placeholder small {
+  margin-top: 8px;
+  color: #a9bbc8;
+  font-size: 9px;
+  font-weight: normal;
+}
+
+#city-map-coordinates {
+  flex-shrink: 0;
+  padding-top: 8px;
+  color: #d6f17a;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+}
+
+/* Leaflet bird's eye city map */
+#city-map-view {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  background: #dce5df;
+}
+
+#city-map-view .leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #dce5df;
+}
+
+/* CITY MAP player tracker */
+#city-map-coordinates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#city-map-centre {
+  padding: 5px 10px;
+  border: 1px solid #6b9eae;
+  border-radius: 4px;
+  background: #183b4a;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#city-map-centre:hover {
+  background: #286176;
+}
+
+.player-marker-icon {
+  background: transparent;
+  border: none;
+}
+
+.player-direction-arrow {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: bold;
+  -webkit-text-stroke: 1px #123e2d;
+  filter: drop-shadow(0 1px 3px #000);
+  transform-origin: center;
+}
+
+/* CITY MAP window controls */
+#city-map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#city-map-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#city-map-header-controls button {
+  width: 25px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid #557887;
+  border-radius: 3px;
+  background: #183b4a;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#city-map-header-controls button:hover {
+  background: #286176;
+}
+
+/* Minimise */
+#city-map-panel.minimised {
+  height: auto !important;
+  min-height: 0 !important;
+  resize: none;
+}
+
+#city-map-panel.minimised #city-map-content {
+  display: none;
+}
+
+/* Maximise within the game window */
+#city-map-panel.maximised {
+  top: 8px !important;
+  right: 8px !important;
+  bottom: 8px !important;
+  left: 8px !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  resize: none;
+}
+

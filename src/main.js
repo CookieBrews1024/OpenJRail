@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
 import { createTileWorld } from './tiles/TileWorld.js';
@@ -6,6 +8,232 @@ import { createTileWorld } from './tiles/TileWorld.js';
 const $ = id => document.getElementById(id);
 const root = $('scene');
 const game = $('game');
+
+// Free Camera city map window
+const cityMapPanel = document.createElement('section');
+cityMapPanel.id = 'city-map-panel';
+cityMapPanel.innerHTML = `
+  <div id="city-map-header">
+  <span>CITY MAP</span>
+
+  <div id="city-map-header-controls">
+    <span id="city-map-status">FREE CAMERA</span>
+    <button id="city-map-minimise" type="button" title="Minimise">−</button>
+    <button id="city-map-maximise" type="button" title="Maximise">□</button>
+  </div>
+</div>
+
+  <div id="city-map-content">
+    <div id="city-map-view"></div>
+
+    <div id="city-map-coordinates">
+  <span id="city-map-position">X: 0.0 · Y: 0.0 · Z: 0.0</span>
+  <button id="city-map-centre" type="button">CENTRE</button>
+</div>
+  </div>
+`;
+
+game.appendChild(cityMapPanel);
+// CITY MAP window controls
+const cityMapMinimise = cityMapPanel.querySelector('#city-map-minimise');
+const cityMapMaximise = cityMapPanel.querySelector('#city-map-maximise');
+
+let cityMapMaximised = false;
+
+cityMapMinimise.addEventListener('pointerdown', event => {
+  event.stopPropagation();
+});
+
+cityMapMaximise.addEventListener('pointerdown', event => {
+  event.stopPropagation();
+});
+
+// Minimise / restore
+cityMapMinimise.addEventListener('click', event => {
+  event.stopPropagation();
+
+  const minimised = cityMapPanel.classList.toggle('minimised');
+
+  cityMapMinimise.textContent = minimised ? '+' : '−';
+  cityMapMinimise.title = minimised ? 'Restore' : 'Minimise';
+
+  if (!minimised) {
+    requestAnimationFrame(() => cityMap.invalidateSize());
+  }
+});
+
+// Maximise / restore size
+cityMapMaximise.addEventListener('click', event => {
+  event.stopPropagation();
+
+  cityMapMaximised = !cityMapMaximised;
+  cityMapPanel.classList.toggle('maximised', cityMapMaximised);
+
+  cityMapMaximise.textContent = cityMapMaximised ? '❐' : '□';
+  cityMapMaximise.title = cityMapMaximised ? 'Restore size' : 'Maximise';
+
+  requestAnimationFrame(() => cityMap.invalidateSize());
+});
+
+// Initialise the Tokyo bird's-eye map
+const cityMap = L.map('city-map-view').setView(
+  [35.6812, 139.7671],
+  15
+);
+
+L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+  {
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 19
+  }
+).addTo(cityMap);
+
+// Player position and direction marker
+const playerIcon = L.divIcon({
+  className: 'player-marker-icon',
+  html: '<div class="player-direction-arrow">▲</div>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14]
+});
+
+const playerMarker = L.marker(
+  [35.6812, 139.7671],
+  { icon: playerIcon, interactive: false }
+).addTo(cityMap);
+
+// Tracking state
+let cityMapTracking = true;
+let lastTrackedPosition = null;
+
+const cityMapStatus = cityMapPanel.querySelector('#city-map-status');
+const cityMapPosition = cityMapPanel.querySelector('#city-map-position');
+const cityMapCentre = cityMapPanel.querySelector('#city-map-centre');
+
+// Manual map movement pauses tracking
+cityMap.on('dragstart', () => {
+  cityMapTracking = false;
+  cityMapStatus.textContent = 'MANUAL VIEW';
+});
+
+// Centre button resumes tracking
+cityMapCentre.addEventListener('click', event => {
+  event.stopPropagation();
+
+  cityMapTracking = true;
+  lastTrackedPosition = null;
+  cityMapStatus.textContent = 'TRACKING';
+
+  const position = playerMarker.getLatLng();
+
+  cityMap.setView(position, cityMap.getZoom(), {
+    animate: true
+  });
+});
+
+function updateCityMapTracker() {
+  if (!freeCam.enabled) return;
+
+  const x = camera.position.x;
+  const y = camera.position.y;
+  const z = camera.position.z;
+
+  // Convert Three.js metres into geographic coordinates.
+  const originLat = 35.6812;
+  const originLon = 139.7671;
+  const metresPerDegree = 111320;
+
+  const latitude =
+    originLat - z / metresPerDegree;
+
+  const longitude =
+    originLon +
+    x / (
+      metresPerDegree *
+      Math.cos(originLat * Math.PI / 180)
+    );
+
+  const position = L.latLng(latitude, longitude);
+
+  playerMarker.setLatLng(position);
+
+  // Update the arrow to show the camera's facing direction.
+  const direction = new THREE.Vector3(
+    -Math.sin(freeCam.yaw) * Math.cos(freeCam.pitch),
+    Math.sin(freeCam.pitch),
+    -Math.cos(freeCam.yaw) * Math.cos(freeCam.pitch)
+  );
+
+  const bearing = THREE.MathUtils.radToDeg(
+    Math.atan2(direction.x, -direction.z)
+  );
+
+  const arrow = playerMarker.getElement()?.querySelector(
+    '.player-direction-arrow'
+  );
+
+  if (arrow) {
+    arrow.style.transform = `rotate(${bearing}deg)`;
+  }
+
+  cityMapPosition.textContent =
+    `X: ${x.toFixed(1)} · Y: ${y.toFixed(1)} · Z: ${z.toFixed(1)}`;
+
+  // Keep the map centred only while tracking is enabled.
+  if (cityMapTracking) {
+    const moved = !lastTrackedPosition ||
+      lastTrackedPosition.distanceTo(
+        new THREE.Vector2(x, z)
+      ) > 0.5;
+
+    if (moved) {
+      cityMap.panTo(position, { animate: false });
+
+      lastTrackedPosition = new THREE.Vector2(x, z);
+    }
+  }
+}
+
+// Drag the panel by its title bar
+const cityMapHeader = cityMapPanel.querySelector('#city-map-header');
+let mapDragging = false;
+let mapDragOffsetX = 0;
+let mapDragOffsetY = 0;
+
+cityMapHeader.addEventListener('pointerdown', event => {
+  mapDragging = true;
+  const panelRect = cityMapPanel.getBoundingClientRect();
+
+  mapDragOffsetX = event.clientX - panelRect.left;
+  mapDragOffsetY = event.clientY - panelRect.top;
+
+  cityMapHeader.setPointerCapture(event.pointerId);
+});
+
+cityMapHeader.addEventListener('pointermove', event => {
+  if (!mapDragging) return;
+
+  const gameRect = game.getBoundingClientRect();
+
+  const x = event.clientX - gameRect.left - mapDragOffsetX;
+  const y = event.clientY - gameRect.top - mapDragOffsetY;
+
+  cityMapPanel.style.left =
+    `${Math.max(0, Math.min(x, game.clientWidth - cityMapPanel.offsetWidth))}px`;
+
+  cityMapPanel.style.top =
+    `${Math.max(0, Math.min(y, game.clientHeight - cityMapPanel.offsetHeight))}px`;
+
+  cityMapPanel.style.right = 'auto';
+});
+
+cityMapHeader.addEventListener('pointerup', () => {
+  mapDragging = false;
+});
+
+cityMapHeader.addEventListener('pointercancel', () => {
+  mapDragging = false;
+});
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9bc7e0);
@@ -208,6 +436,153 @@ for (let z = -100; z < 700; z += 30) {
   );
 }
 
+
+// Curved OSM railway track — Tokyo to Akihabara
+const osmTrackGroup = new THREE.Group();
+scene.add(osmTrackGroup);
+
+// Shared railway path for train movement.
+let trainRouteCurve = null;
+let trainRouteLength = 0;
+
+// Adjustable vertical alignment for the OSM track.
+const trackHeightOffset = 40;
+
+async function createOSMTrack() {
+  try {
+    const response = await fetch('/data/yamanote-tokyo-akihabara.json');
+
+    if (!response.ok) {
+      throw new Error(`Route file returned HTTP ${response.status}`);
+    }
+
+    const routeData = await response.json();
+
+    // Convert the route coordinates into Three.js points.
+    const routePoints = routeData.points.map(
+      point => new THREE.Vector3(point[0], point[1], point[2])
+    );
+
+    const centreline = new THREE.CatmullRomCurve3(
+      routePoints,
+      false,
+      'centripetal'
+    );
+
+    const routeLength = centreline.getLength();
+
+    // Make the route available to the train.
+    trainRouteCurve = centreline;
+    trainRouteLength = routeLength;
+
+    // Create a smooth curve offset to either side of the centreline.
+    function makeRailCurve(offset) {
+      const offsetPoints = [];
+      const samples = 800;
+
+      for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+
+        const point = centreline.getPointAt(t);
+        const tangent = centreline.getTangentAt(t).normalize();
+
+        const side = new THREE.Vector3(
+          -tangent.z,
+          0,
+          tangent.x
+        ).normalize();
+
+        point.addScaledVector(side, offset);
+        point.y += trackHeightOffset + 0.06;
+
+        offsetPoints.push(point);
+      }
+
+      return new THREE.CatmullRomCurve3(
+        offsetPoints,
+        false,
+        'centripetal'
+      );
+    }
+
+    // Japanese 1,067 mm track gauge.
+    const railOffset = 0.6035;
+
+    for (const offset of [-railOffset, railOffset]) {
+      const railCurve = makeRailCurve(offset);
+
+      const rail = new THREE.Mesh(
+        new THREE.TubeGeometry(
+          railCurve,
+          800,
+          0.07,
+          8,
+          false
+        ),
+        railMat
+      );
+
+      osmTrackGroup.add(rail);
+    }
+
+    // Add sleepers every 0.6 metres along the route.
+    const sleeperGeometry = new THREE.BoxGeometry(
+      2.4,
+      0.16,
+      0.34
+    );
+
+    const sleeperSpacing = 0.6;
+
+    for (
+      let distance = 0;
+      distance <= routeLength;
+      distance += sleeperSpacing
+    ) {
+      const t = distance / routeLength;
+
+      const point = centreline.getPointAt(t);
+      const tangent = centreline.getTangentAt(t).normalize();
+
+      const sleeper = new THREE.Mesh(
+        sleeperGeometry,
+        sleeperMat
+      );
+
+      sleeper.position.set(
+        point.x,
+        point.y + trackHeightOffset - 0.02,
+        point.z
+      );
+
+      // Rotate the sleeper to stay perpendicular to the track.
+      sleeper.rotation.y = Math.atan2(
+        tangent.x,
+        tangent.z
+      );
+
+      osmTrackGroup.add(sleeper);
+    }
+
+    console.log(
+      `OpenJRail: loaded ${routeData.route}`
+    );
+
+    console.log(
+      `Track length: ${routeLength.toFixed(1)} metres`
+    );
+
+    console.log(
+      `Sleepers: ${osmTrackGroup.children.length - 2}`
+    );
+
+  } catch (error) {
+    console.error('Could not create OSM railway track:', error);
+  }
+}
+
+createOSMTrack();
+
 // Buildings and trees
 for (let z = -25; z < 650; z += 19) {
   for (const side of [-1, 1]) {
@@ -315,7 +690,7 @@ const difficulties = {
   Hard:   { tolerance: 1.5, timetable: 3,  guidance: false }
 };
 
-const route = { speedLimit: 22.22, terminal: 500 };
+const route = { speedLimit: 22.22, terminal: 2346.5 };
 
 for (const station of stations) {
   const z = station.position;
@@ -796,6 +1171,7 @@ function toggleFreeCam() {
     );
 
     game.classList.add('free-camera-active');
+    requestAnimationFrame(() => cityMap.invalidateSize());
     state.message = 'FREE CAMERA · WASD move · Right-click drag to look · P to exit';
   } else {
     game.classList.remove('free-camera-active');
@@ -1037,7 +1413,7 @@ function animate(now) {
   state.elapsed += dt;
 
   
-if (!state.awaitingDeparture && state.stationIndex < stations.length) {
+if (!state.awaitingDeparture && state.position < route.terminal) {
   // Automatic overspeed protection
   const targetSpeed = Math.max(0, route.speedLimit - 5 / 3.6);
 
@@ -1095,26 +1471,45 @@ state.gForce = acceleration / 9.81;
     );
 
     state.position += state.speed * dt;
+    if (Math.floor(state.position) % 100 === 0) {
+  console.log(
+    'Train movement:',
+    state.position.toFixed(1),
+    'Speed:',
+    state.speed.toFixed(1),
+    'Route length:',
+    trainRouteLength.toFixed(1)
+  );
+}
     state.overspeedSeconds +=
       state.speed > route.speedLimit ? dt : 0;
 
-    const error = Math.abs(state.position - station.position);
+      if (state.position > 470 && state.position < 500) {
+  console.log({
+    position: state.position,
+    speed: state.speed,
+    power: state.power,
+    brake: state.brake,
+    stationIndex: state.stationIndex,
+    awaitingDeparture: state.awaitingDeparture
+  });
+}
 
-    if (state.speed < 0.35 && error <= difficulty.tolerance) {
-      state.speed = 0;
-      state.power = 0;
-      state.brake = 0;
-      state.emergency = false;
-      state.awaitingDeparture = true;
-      scoreStation(station);
-    } else if (state.position > station.position + difficulty.tolerance) {
-      scoreStation(station, true);
-      state.stationIndex++;
-    }
-  } else if (state.stationIndex >= stations.length) {
+   if (station) {
+  const error = Math.abs(state.position - station.position);
+
+  if (state.speed < 0.35 && error <= difficulty.tolerance) {
     state.speed = 0;
     state.power = 0;
+    state.brake = 0;
+    state.emergency = false;
+    state.awaitingDeparture = true;
+    scoreStation(station);
+  } else if (state.position > station.position + difficulty.tolerance) {
+    scoreStation(station, true);
+    state.stationIndex++;
   }
+}
 
 const activeSafetyTarget = safetyTargets[safetyTargetIndex];
 
@@ -1135,18 +1530,74 @@ if (activeSafetyTarget) {
 } else {
   safetyMarker.visible = false;
 }
+
+// Move the train along the OSM railway route.
+if (trainRouteCurve && trainRouteLength > 0) {
+  // Convert travelled distance into a position on the route.
+  const distance = THREE.MathUtils.clamp(
+    state.position,
+    0,
+    trainRouteLength
+  );
+
+  const progress = distance / trainRouteLength;
+
+  // Get the train's position and direction on the curve.
+  const point = trainRouteCurve.getPointAt(progress);
+  const tangent = trainRouteCurve.getTangentAt(progress).normalize();
+
+  // Position the train at the railway's height.
+  train.position.set(
+    point.x,
+    point.y + trackHeightOffset,
+    point.z
+  );
+
+  // Rotate the train to follow the railway.
+  train.rotation.y = Math.atan2(
+    tangent.x,
+    tangent.z
+  );
+} else {
+  // Keep the original movement until the route loads.
   train.position.z = state.position;
+}
+  if (freeCam.enabled) {
+  updateFreeCam(dt);
+} else {
+  // Get the train's direction along the curved railway.
+  const trainForward = new THREE.Vector3(0, 0, -1);
 
-   if (freeCam.enabled) {
-    updateFreeCam(dt);
-  } else {
-    const target = new THREE.Vector3(0, 1.4, state.position + 7);
-    const desiredCamera = new THREE.Vector3(0, 5.5, state.position - 13);
+  if (trainRouteCurve && trainRouteLength > 0) {
+    const progress = THREE.MathUtils.clamp(
+      state.position / trainRouteLength,
+      0,
+      1
+    );
 
-    camera.position.lerp(desiredCamera, 1 - Math.exp(-4 * dt));
-    camera.lookAt(target);
+    trainForward.copy(
+      trainRouteCurve.getTangentAt(progress)
+    ).normalize();
   }
 
+  // Look slightly ahead of the train.
+  const target = train.position.clone()
+    .add(new THREE.Vector3(0, 1.4, 0))
+    .addScaledVector(trainForward, 7);
+
+  // Follow behind the train, keeping the camera above it.
+  const desiredCamera = train.position.clone()
+    .add(new THREE.Vector3(0, 5.5, 0))
+    .addScaledVector(trainForward, -13);
+
+  camera.position.lerp(
+    desiredCamera,
+    1 - Math.exp(-4 * dt)
+  );
+
+  camera.lookAt(target);
+}
+updateCityMapTracker();
  
   // G-force meter: normal braking is green; emergency braking
   const fill = $('gforce-fill');
@@ -1258,6 +1709,8 @@ fill.style.backgroundRepeat = 'no-repeat';
   tileWorld?.update();
   renderer.render(scene, camera);
 }
+
+} // End of animate()
 
 requestAnimationFrame(animate);
 

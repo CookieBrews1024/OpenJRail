@@ -112,19 +112,79 @@ tiles.addEventListener('load-model', (event) => {
     tiles.group.children.length,
   );
 
-  tiles.group.traverse((object) => {
-    if (object.isMesh) {
-      const box = new THREE.Box3().setFromObject(object);
 
-      console.info('[OpenJRail] Tile mesh:', {
-        name: object.name,
-        position: object.getWorldPosition(new THREE.Vector3()).toArray(),
-        boundsEmpty: box.isEmpty(),
-        min: box.min.toArray(),
-        max: box.max.toArray(),
-      });
+let loggedMeshes = 0;
+let matchingMeshes = 0;
+
+// Approximate area around the Tokyo end of the route.
+const tokyoArea = new THREE.Box3(
+  new THREE.Vector3(-150, -10000, -150),
+  new THREE.Vector3(150, 10000, 150)
+);
+
+tiles.group.updateMatrixWorld(true);
+
+tiles.group.traverse((object) => {
+  if (!object.isMesh) return;
+
+  const box = new THREE.Box3().setFromObject(object);
+  const geometry = object.geometry;
+
+if (geometry && geometry.attributes.position) {
+  const positions = geometry.attributes.position;
+  const worldPosition = new THREE.Vector3();
+
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let i = 0; i < positions.count; i++) {
+    worldPosition.fromBufferAttribute(positions, i);
+    object.localToWorld(worldPosition);
+
+    if (
+      Math.abs(worldPosition.x) < 100 &&
+      Math.abs(worldPosition.z) < 100
+    ) {
+      minY = Math.min(minY, worldPosition.y);
+      maxY = Math.max(maxY, worldPosition.y);
     }
-  });
+  }
+
+  if (minY !== Infinity) {
+    console.info('[OpenJRail] Tokyo geometry heights:', {
+      minY,
+      maxY,
+    });
+  }
+}
+  if (box.isEmpty()) return;
+
+  // Check whether the mesh bounds overlap Tokyo,
+  // rather than checking only the mesh centre.
+  if (box.intersectsBox(tokyoArea)) {
+    matchingMeshes++;
+
+    console.info('[OpenJRail] Tokyo-area tile mesh:', {
+      name: object.name,
+      min: box.min.toArray(),
+      max: box.max.toArray(),
+    });
+  }
+
+  // Also show the first 10 meshes for comparison.
+  if (loggedMeshes < 10) {
+    console.info('[OpenJRail] Tile mesh sample:', {
+      name: object.name,
+      min: box.min.toArray(),
+      max: box.max.toArray(),
+    });
+
+    loggedMeshes++;
+  }
+});
+
+console.info('[OpenJRail] Tokyo-area matching meshes:', matchingMeshes);
+
 });
 
   tiles.addEventListener('load-error', (event) => {
