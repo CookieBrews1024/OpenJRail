@@ -628,9 +628,9 @@ for (let z = -25; z < 650; z += 19) {
 
 // Route and stations
 const stations = [
-  { name: 'Tokyo ', position: 150 },
-  { name: 'Kanda', position: 320 },
-  { name: 'Akihabara', position: 480 }
+  { name: 'Tokyo', position: 8.2 },
+  { name: 'Kanda', position: 1237.9 },
+  { name: 'Akihabara', position: 1998.6 }
 ];
 
 const safetyTargets = [
